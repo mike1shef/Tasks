@@ -5,8 +5,10 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.roadmod.tasks.databinding.FragmentTasksBinding
 
 class TasksFragment : Fragment() {
@@ -27,7 +29,9 @@ class TasksFragment : Fragment() {
         val viewModel = ViewModelProvider(
             this, viewModelFactory)[TasksViewModel::class.java]
 
-        val adapter = TaskItemAdapter()
+        val adapter = TaskItemAdapter{ taskId ->
+            viewModel.onTaskClicked(taskId)
+        }
         binding.tasksList.adapter = adapter
 
         viewModel.tasks.observe(viewLifecycleOwner, Observer {
@@ -36,8 +40,21 @@ class TasksFragment : Fragment() {
             }
         })
 
+        viewModel.navigateToTask.observe(viewLifecycleOwner, Observer {taskId ->
+            taskId?.let {
+                val action = TasksFragmentDirections
+                    .actionTasksFragmentToEditTaskFragment(taskId)
+                this.findNavController().navigate(action)
+                viewModel.onTaskNavigated()
+            }
+        })
+
         binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
+
+//        binding.root.setOnClickListener {
+//            Toast.makeText(binding.root.context, "Clicked task ${tasks.taskId}",
+//                Toast.LENGTH_SHORT).show()
 
         return view
     }
